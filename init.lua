@@ -96,6 +96,9 @@ vim.g.have_nerd_font = true
 -- Change PWD to main repos directory on start
 vim.cmd 'cd ~/repos'
 
+-- Remap <C-w> to <C-<BS>> to delete words
+vim.api.nvim_set_keymap('i', '<C-BS>', '<C-w>', {})
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
