@@ -97,7 +97,7 @@ vim.g.have_nerd_font = true
 vim.cmd 'cd ~/repos'
 
 -- Remap <C-w> to <C-<BS>> to delete words
-vim.api.nvim_set_keymap('i', '<C-BS>', '<C-w>', {})
+vim.api.nvim_set_keymap('i', '<C-BS>', '<C-w>', { noremap = true, silent = true })
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -629,6 +629,7 @@ require('lazy').setup({
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
+        hls = {},
         ts_ls = {
           capabilities = {
             textDocument = {
@@ -637,8 +638,6 @@ require('lazy').setup({
             },
           },
         },
-        --
-
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
@@ -669,7 +668,6 @@ require('lazy').setup({
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
         'quick-lint-js',
-        'ts_ls',
         'prettier',
         'prettierd',
         'markdownlint',
@@ -743,6 +741,7 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         javascript = { 'prettierd', stop_after_first = true },
+        javascriptreact = { 'prettierd', stop_after_first = true },
         typescript = { 'prettierd' },
         typescriptreact = { 'prettierd' },
         css = { 'prettierd' },
