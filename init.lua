@@ -668,6 +668,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'clang-format',
         'php-cs-fixer',
         'quick-lint-js',
         'prettier',
@@ -748,6 +749,7 @@ require('lazy').setup({
         typescriptreact = { 'prettierd' },
         css = { 'prettierd' },
         html = { 'prettierd' },
+        c = { 'clang-format', stop_after_first = true },
         php = { 'php-cs-fixer' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
@@ -961,7 +963,12 @@ require('lazy').setup({
   },
   {
     'nvim-treesitter/nvim-treesitter-context',
-    opts = {},
+    opts = {
+      multiline_threshold = 10,
+    },
+    keys = {
+      { '<leader>tc', '<cmd>TSContextToggle<CR>', desc = '[T]oggle Treesitter [C]context' },
+    },
   },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
@@ -973,7 +980,7 @@ require('lazy').setup({
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.debug',
   require 'kickstart.plugins.autopairs',
   -- require 'kickstart.plugins.indent_line',
   require 'kickstart.plugins.lint',
