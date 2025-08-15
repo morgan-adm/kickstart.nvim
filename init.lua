@@ -163,6 +163,8 @@ vim.opt.scrolloff = 5
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
+--  open oil.nvim
+vim.keymap.set('n', '<C-b>', '<cmd>Oil<CR>')
 
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
@@ -339,7 +341,7 @@ require('lazy').setup({
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VimEnter',
-    branch = '0.1.x',
+    -- branch = '0.1.x',
     dependencies = {
       'nvim-lua/plenary.nvim',
       { -- If encountering errors, see telescope-fzf-native README for installation instructions
@@ -468,8 +470,8 @@ require('lazy').setup({
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
       { 'j-hui/fidget.nvim', opts = {} },
 
-      -- Allows extra capabilities provided by nvim-cmp
-      'hrsh7th/cmp-nvim-lsp',
+      -- Allows extra capabilities provided by blink.cmp
+      'saghen/blink.cmp',
     },
     config = function()
       -- Brief aside: **What is LSP?**
@@ -601,71 +603,92 @@ require('lazy').setup({
         end
         vim.diagnostic.config { signs = { text = diagnostic_signs } }
       end
-
       -- LSP servers and clients are able to communicate to each other what features they support.
       --  By default, Neovim doesn't support everything that is in the LSP specification.
-      --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities.
-      --  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
-      local capabilities = vim.lsp.protocol.make_client_capabilities()
-      capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
-
-      -- Enable the following language servers
-      --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
+      --  When you add blink.cmp, luasnip, etc. Neovim now has *more* capabilities.
+      --  So, we create new capabilities with blink.cmp, and then broadcast that to the servers.
+      -- NOTE: The following line is now commented as blink.cmp extends capabilites by default from its internal code:
+      -- https://github.com/Saghen/blink.cmp/blob/102db2f5996a46818661845cf283484870b60450/plugin/blink-cmp.lua
+      -- It has been left here as a comment for educational purposes (as the predecessor completion plugin required this explicit step).
       --
-      --  Add any additional override configuration in the following tables. Available keys are:
-      --  - cmd (table): Override the default command used to start the server
-      --  - filetypes (table): Override the default list of associated filetypes for the server
-      --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
-      --  - settings (table): Override the default settings passed when initializing the server.
-      --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
+      -- local capabilities = require("blink.cmp").get_lsp_capabilities()
+
+      -- Language servers can broadly be installed in the following ways:
+      --  1) via the mason package manager; or
+      --  2) via your system's package manager; or
+      --  3) via a release binary from a language server's repo that's accessible somewhere on your system.
+
+      -- The servers table comprises of the following sub-tables:
+      -- 1. mason
+      -- 2. others
+      -- Both these tables have an identical structure of language server names as keys and
+      -- a table of language server configuration as values.
+      ---@class LspServersConfig
+      ---@field mason table<string, vim.lsp.Config>
+      ---@field others table<string, vim.lsp.Config>
       local servers = {
-        -- gopls = {},
-        -- pyright = {},
-        -- rust_analyzer = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
+        --  Add any additional override configuration in any of the following tables. Available keys are:
+        --  - cmd (table): Override the default command used to start the server
+        --  - filetypes (table): Override the default list of associated filetypes for the server
+        --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
+        --  - settings (table): Override the default settings passed when initializing the server.
+        --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
         --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
-        --
-        -- But for many setups, the LSP (`ts_ls`) will work just fine
-        phpactor = {},
-        clangd = {},
-        hls = {},
-        ts_ls = {
-          capabilities = {
-            textDocument = {
-              formatting = false,
-              rangeFormatting = false,
+        --  Feel free to add/remove any LSPs here that you want to install via Mason. They will automatically be installed and setup.
+        mason = {
+          gopls = {},
+          pyright = {},
+          -- rust_analyzer = {},
+          -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
+          --
+          -- Some languages (like typescript) have entire language plugins that can be useful:
+          --    https://github.com/pmizio/typescript-tools.nvim
+          --
+          -- But for many setups, the LSP (`ts_ls`) will work just fine
+          phpactor = {},
+          clangd = {},
+          hls = {},
+          ts_ls = {
+            capabilities = {
+              textDocument = {
+                formatting = false,
+                rangeFormatting = false,
+              },
+            },
+          },
+          lua_ls = {
+            -- cmd = {...},
+            -- filetypes = { ...},
+            -- capabilities = {},
+            settings = {
+              Lua = {
+                completion = {
+                  callSnippet = 'Replace',
+                },
+                -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
+                -- diagnostics = { disable = { 'missing-fields' } },
+              },
             },
           },
         },
-        lua_ls = {
-          -- cmd = {...},
-          -- filetypes = { ...},
-          -- capabilities = {},
-          settings = {
-            Lua = {
-              completion = {
-                callSnippet = 'Replace',
-              },
-              -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-              -- diagnostics = { disable = { 'missing-fields' } },
-            },
-          },
+        -- This table contains config for all language servers that are *not* installed via Mason.
+        -- Structure is identical to the mason table from above.
+        others = {
+          -- dartls = {},
         },
       }
 
       -- Ensure the servers and tools above are installed
+      --
       --  To check the current status of installed tools and/or manually install
       --  other tools, you can run
       --    :Mason
       --
       --  You can press `g?` for help in this menu.
-      require('mason').setup()
-
-      -- You can add other tools here that you want Mason to install
-      -- for you, so that they are available from within Neovim.
-      local ensure_installed = vim.tbl_keys(servers or {})
+      --
+      --  You can add other tools here that you want Mason to install
+      --  for you, so that they are available from within Neovim
+      local ensure_installed = vim.tbl_keys(servers.mason or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
         'clang-format',
@@ -674,21 +697,33 @@ require('lazy').setup({
         'prettier',
         'prettierd',
         'markdownlint',
+        'black',
+        'isort',
+        'gopls',
+        'gofmt',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
+      -- Either merge all additional server configs from the `servers.mason` and `servers.others` tables
+      -- to the default language server configs as provided by nvim-lspconfig or
+      -- define a custom server config that's unavailable on nvim-lspconfig
+      for server, config in pairs(vim.tbl_extend('keep', servers.mason, servers.others)) do
+        if not vim.tbl_isempty(config) then
+          vim.lsp.config(server, config)
+        end
+      end
+
+      -- After configuring our language servers, we now enable them
       require('mason-lspconfig').setup {
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
+        ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
+        automatic_enable = true, -- automatically run vim.lsp.enable() for all servers that are installed via Mason
       }
+
+      -- Manually run vim.lsp.enable for all language servers that are *not* installed via Mason
+      if not vim.tbl_isempty(servers.others) then
+        vim.lsp.enable(vim.tbl_keys(servers.others))
+      end
+
       -- add borders to floating windows
       local border = {
         { '╭', 'NormalFloat' },
@@ -700,6 +735,7 @@ require('lazy').setup({
         { '╰', 'NormalFloat' },
         { '│', 'NormalFloat' },
       }
+
       local orig_util_open_floating_preview = vim.lsp.util.open_floating_preview
       function vim.lsp.util.open_floating_preview(contents, syntax, opts, ...)
         opts = opts or {}
@@ -752,7 +788,8 @@ require('lazy').setup({
         c = { 'clang-format', stop_after_first = true },
         php = { 'php-cs-fixer' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
+        python = { 'isort', 'black' },
+        go = { 'gofmt' },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
       },
@@ -970,6 +1007,10 @@ require('lazy').setup({
       { '<leader>tc', '<cmd>TSContextToggle<CR>', desc = '[T]oggle Treesitter [C]context' },
     },
   },
+  {
+    "jmbuhr/otter.nvim",
+    dependencies = { "nvim-treesitter/nvim-treesitter" }
+  }
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
@@ -984,7 +1025,7 @@ require('lazy').setup({
   require 'kickstart.plugins.autopairs',
   -- require 'kickstart.plugins.indent_line',
   require 'kickstart.plugins.lint',
-  require 'kickstart.plugins.neo-tree',
+  -- require 'kickstart.plugins.neo-tree',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   {
@@ -999,6 +1040,23 @@ require('lazy').setup({
     'tpope/vim-rhubarb',
     opts = {},
     config = function() end,
+  },
+  {
+    'stevearc/oil.nvim',
+    --@module 'oil'
+    --@type oil.setupOpts
+    opts = {
+      keymaps = {
+        ['<C-h>'] = false,
+        ['<C-l>'] = false,
+        ['<C-j>'] = false,
+        ['<C-k>'] = false,
+        ['<C-v'] = { 'actions.select', opts = { vertical = true } },
+        ['<C-s'] = { 'actions.select', opts = { horizontal = true } },
+      },
+    },
+    dependencies = { { 'echasnovski/mini.icons', opts = {} } },
+    lazy = false,
   },
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
