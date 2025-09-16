@@ -1004,7 +1004,7 @@ require('lazy').setup({
       multiline_threshold = 10,
     },
     keys = {
-      { '<leader>tc', '<cmd>TSContextToggle<CR>', desc = '[T]oggle Treesitter [C]context' },
+      { '<leader>tc', '<cmd>TSContext toggle<CR>', desc = '[T]oggle Treesitter [C]context' },
     },
   },
   {
