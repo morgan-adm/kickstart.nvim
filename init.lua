@@ -99,6 +99,13 @@ vim.cmd 'cd ~/repos'
 -- Remap <C-w> to <C-<BS>> to delete words
 vim.api.nvim_set_keymap('i', '<C-BS>', '<C-w>', { noremap = true, silent = true })
 
+-- [[ quicktemplate setup ]]
+vim.filetype.add {
+  extension = {
+    qtpl = 'html',
+  },
+}
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
