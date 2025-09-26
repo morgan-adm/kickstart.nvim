@@ -1045,9 +1045,20 @@ require('lazy').setup({
     },
   },
   {
-    "jmbuhr/otter.nvim",
-    dependencies = { "nvim-treesitter/nvim-treesitter" }
-  }
+    'jmbuhr/otter.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter' },
+    opts = {},
+    config = function()
+      local otter = require 'otter'
+      vim.api.nvim_create_autocmd('BufEnter', {
+        desc = 'Activate otter LSP on *.qtpl bufenter',
+        pattern = '*.qtpl',
+        callback = function()
+          otter.activate({ 'go' }, true, true)
+        end,
+      })
+    end,
+  },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
